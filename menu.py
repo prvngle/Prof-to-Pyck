@@ -1,8 +1,38 @@
 from os import system, name
 from colorama import Fore
+from tabulate import tabulate
+import shutil
 import database as dbs
 
 reviews = dbs.reviews()
+terminal_width = shutil.get_terminal_size().columns
+
+prof_rev_ascii = r"""
+   ___           ___                        ___           _              
+  / _ \_______  / _/__ ___ ___ ___  ____   / _ \___ _  __(_)__ _    _____
+ / ___/ __/ _ \/ _/ -_|_-<(_-</ _ \/ __/  / , _/ -_) |/ / / -_) |/|/ (_-<
+/_/  /_/  \___/_/ \__/___/___/\___/_/    /_/|_|\__/|___/_/\__/|__,__/___/
+
+=========================================================================
+      """
+
+prof_search_ascii = r"""
+   ___           ___                        ____                 __ 
+  / _ \_______  / _/__ ___ ___ ___  ____   / __/__ ___ _________/ / 
+ / ___/ __/ _ \/ _/ -_|_-<(_-</ _ \/ __/  _\ \/ -_) _ `/ __/ __/ _ \
+/_/  /_/  \___/_/ \__/___/___/\___/_/    /___/\__/\_,_/_/  \__/_//_/
+                                                                                         
+=====================================================================
+      """
+
+prof_pyck_ascii = r"""
+   ___           ___       __           _____  __    __  
+  / _ \_______  / _/__    / /____      / _ \ \/ /___/ /__
+ / ___/ __/ _ \/ _(_-<   / __/ _ \    / ___/\  / __/  '_/
+/_/  /_/  \___/_//___/   \__/\___/   /_/    /_/\__/_/\_\ 
+                                                                                         
+=========================================================  
+        """
 
 def clear():
     """
@@ -21,17 +51,19 @@ def view_reviews():
     """
     while True:
         clear()
-        print(Fore.GREEN + r"""
-                      ___           ___                        ___           _              
-                     / _ \_______  / _/__ ___ ___ ___  ____   / _ \___ _  __(_)__ _    _____
-                    / ___/ __/ _ \/ _/ -_|_-<(_-</ _ \/ __/  / , _/ -_) |/ / / -_) |/|/ (_-<
-                   /_/  /_/  \___/_/ \__/___/___/\___/_/    /_/|_|\__/|___/_/\__/|__,__/___/
-                                                                                         
-                   =========================================================================
-                                            """)
+        centered_ascii = "\n".join(line.center(terminal_width) for line in prof_rev_ascii.split("\n")) 
+        print(Fore.GREEN + centered_ascii)
+
         if reviews:
             for i, r in enumerate(reviews, 1):
-                print(f"                               {i}. {r['professor']} ({r['course_code']}): {r['review']}")
+                table_data = [[i + 1, r["professor"], r["course_code"], (r["review"][:5]) + "..." if len(r["review"]) > 5 else r["review"]] for i, r in enumerate(reviews)]
+                headers = ["#", "Professor", "Course Code", "Review"]
+                table = tabulate(table_data, headers, tablefmt="pipe", colalign=("center","left","left"))
+
+            table_lines = table.split("\n")
+            centered_table = "\n".join(line.center(terminal_width) for line in table_lines)
+
+            print(centered_table)
         else:
             print(Fore.GREEN + "                             No reviews available, try adding some to get started!")
 
@@ -53,11 +85,17 @@ def add_review():
     This function is mainly used in the view_reviews() function
     """
     professor = input(Fore.YELLOW + "                               Enter professor's name: ").strip()
-    course_code = input(Fore.YELLOW + "                               Enter course code: ").strip()
+    
+    while True:
+        course_code = input(Fore.YELLOW + "                               Enter course code: ").strip()
+        if len(course_code) == 7: 
+            break
+        print(Fore.GREEN + "                               Invalid course code format, please try again!")
+
     review = input(Fore.YELLOW + "                               Enter your review: ").strip()
 
     if professor and course_code and review:
-        reviews.append({"professor": professor, "course_code": course_code, "review": review})
+        reviews.append({"professor": professor, "course_code": course_code.upper(), "review": review})
         dbs.save_reviews(reviews)
         print("Review added successfully!")
     else:
@@ -79,15 +117,8 @@ def search_professor():
     """
     while True:
         clear()
-        print(Fore.GREEN + r"""
-
-                         ___           ___                        ____                 __ 
-                        / _ \_______  / _/__ ___ ___ ___  ____   / __/__ ___ _________/ / 
-                       / ___/ __/ _ \/ _/ -_|_-<(_-</ _ \/ __/  _\ \/ -_) _ `/ __/ __/ _ \
-                      /_/  /_/  \___/_/ \__/___/___/\___/_/    /___/\__/\_,_/_/  \__/_//_/
-                                                                                         
-                     =====================================================================
-                                                        """)
+        centered_ascii = "\n".join(line.center(terminal_width) for line in prof_search_ascii.split("\n"))
+        print(Fore.GREEN + centered_ascii)
         course_code = input("                       Enter course code of professor (or type 'back' to return): ").strip()
 
         if course_code.lower() == "back":
@@ -99,10 +130,10 @@ def search_professor():
             print("No professors found for this course code. Try again.")
             continue
 
-        # Display the list of professors found
         print("\n                       Professors found:")
         for i, r in enumerate(filtered_reviews, 1):
-            print(Fore.GREEN + f"                       ({i}) {r['professor']} - {r['review']}")
+            shortened_review = (r["review"][:5] + "...") if len(r["review"]) > 5 else r["review"]
+            print(Fore.GREEN + f"                       ({i}) {r['professor']} - {shortened_review}")
 
         while True:
             choice = input(Fore.YELLOW + "                       Enter the number of the professor to view their review (type 'back' to return): ").strip()
@@ -117,7 +148,10 @@ def search_professor():
             index = int(choice) - 1
             selected_review = filtered_reviews[index]
 
-            # Options for the selected professor
+            print(Fore.GREEN + f"\n                       Professor: {selected_review['professor']}")
+            print(Fore.GREEN + f"                       Course Code: {selected_review['course_code']}")
+            print(Fore.GREEN + f"                       Review: {selected_review['review']}")
+
             while True:
                 print(Fore.YELLOW + "\n                       (1) Edit Review")
                 print(Fore.YELLOW + "                       (2) Delete Review")
@@ -134,7 +168,7 @@ def search_professor():
                     reviews.remove(selected_review)
                     dbs.save_reviews(reviews)
                     print(Fore.GREEN + "                       Review deleted successfully!")
-                    break  # Break out after deletion
+                    break  
                 elif action == "3":
                     break
                 else:
@@ -152,19 +186,13 @@ def main_menu():
     """
     while True:
         clear()
-        print(Fore.GREEN + r"""
-                            ___           ___       __           _____  __    __  
-                           / _ \_______  / _/__    / /____      / _ \ \/ /___/ /__
-                          / ___/ __/ _ \/ _(_-<   / __/ _ \    / ___/\  / __/  '_/
-                         /_/  /_/  \___/_//___/   \__/\___/   /_/    /_/\__/_/\_\ 
-                                                                                         
-                         =========================================================          
-                                                                                   """)
+        centered_ascii = "\n".join(line.center(terminal_width) for line in prof_pyck_ascii.split("\n")) 
+        print(Fore.GREEN + centered_ascii)
         print(Fore.YELLOW + "                               (1) View Reviews")
         print(Fore.YELLOW + "                               (2) Search for a Professor")
         print(Fore.YELLOW + "                               (3) Exit")
 
-        choice = input(" ").strip()
+        choice = input("").strip()
 
         if choice == "1":
             view_reviews()
