@@ -227,8 +227,7 @@ def main_menu():
         elif choice == "2":
             search_professor()
         elif choice == "3":
-            clear()
-            break
+            help_menu()
         elif choice == "4":
             clear()
             break
