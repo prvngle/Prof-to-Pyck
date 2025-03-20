@@ -13,6 +13,24 @@ def clear():
     else:
         _ = system("clear")
 
+def help_menu():
+    """
+    Displays a help section to guide users on how to use the application.
+    """
+    clear()
+    print(Fore.CYAN + r"""
+                          HELP MENU
+    ==================================================
+    - View Reviews: Displays all available professor reviews.
+    - Add Review: Allows users to add a review for a professor.
+    - Search for a Professor: Enables users to search for a professor by course code.
+    - Edit Review: Users can modify an existing review.
+    - Delete Review: Users can remove a review from database.
+    - Exit: Quits the application.
+    ==================================================
+    """)
+    input(Fore.YELLOW + "Press Enter to return to the main menu...")
+
 def view_reviews():
     """
     Professor Reviews menu, lets the user add a professor review or exit back to the main menu
@@ -162,7 +180,8 @@ def main_menu():
                                                                                    """)
         print(Fore.YELLOW + "                               (1) View Reviews")
         print(Fore.YELLOW + "                               (2) Search for a Professor")
-        print(Fore.YELLOW + "                               (3) Exit")
+        print(Fore.YELLOW + "                               (3) Help")
+        print(Fore.YELLOW + "                               (4) Exit")
 
         choice = input(" ").strip()
 
@@ -171,6 +190,9 @@ def main_menu():
         elif choice == "2":
             search_professor()
         elif choice == "3":
+            clear()
+            break
+        elif choice == "4":
             clear()
             break
         else:
